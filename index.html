@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DreamChain Concept</title>
+    <title>DreamChain</title>
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.1.3/css/bootstrap.min.css">
     <style>
@@ -91,9 +91,8 @@
     </div>
 
     <script>
-        const API_BASE = 'https://api.jsonbin.io/v3'; // JSONBin API
-        const BIN_ID = '676a8804e41b4d34e46a6f08'; // Replace with your JSONBin ID
-        const SECRET_KEY = '$2a$10$3fhO6AC0jPJc8bWvZtKT5ecbjQzBeQ3pvPqUtTvTIvpBAY9SISLmi'; // Replace with your JSONBin secret key
+        const BIN_ID = '676a8804e41b4d34e46a6f08';
+        const SECRET_KEY = '$2a$10$3fhO6AC0jPJc8bWvZtKT5ecbjQzBeQ3pvPqUtTvTIvpBAY9SISLmi';
 
         const headers = {
             'Content-Type': 'application/json',
@@ -117,13 +116,104 @@
             const description = document.getElementById('entry-description').value;
             const type = document.getElementById('entry-type').value;
 
-            // Add entry logic
-            alert(`Entry Added: ${title} - ${type}`);
-            document.getElementById('entry-form').reset();
+            const transaction = {
+                title,
+                description,
+                type,
+                timestamp: new Date().toISOString(),
+            };
+
+            try {
+                // Fetch existing bin data
+                const response = await axios.get(`https://api.jsonbin.io/v3/b/${BIN_ID}`, { headers });
+                const data = response.data.record;
+
+                // Add the new transaction
+                data.transactions.push(transaction);
+
+                // Update the bin
+                await axios.put(`https://api.jsonbin.io/v3/b/${BIN_ID}`, data, { headers });
+
+                alert('Entry added successfully!');
+                document.getElementById('entry-form').reset();
+                loadPendingTransactions();
+            } catch (error) {
+                console.error('Error adding entry:', error);
+                alert('Failed to add entry.');
+            }
         });
 
         document.getElementById('mine-button').addEventListener('click', async () => {
-            alert('Mining a block...');
+            try {
+                const response = await axios.get(`https://api.jsonbin.io/v3/b/${BIN_ID}`, { headers });
+                const data = response.data.record;
+
+                if (data.transactions.length === 0) {
+                    alert('No transactions to mine.');
+                    return;
+                }
+
+                // Create a new block
+                const newBlock = {
+                    index: data.blocks.length + 1,
+                    timestamp: new Date().toISOString(),
+                    transactions: [...data.transactions],
+                    miner: 'Anonymous', // Replace with username if available
+                };
+
+                // Clear pending transactions
+                data.transactions = [];
+
+                // Add the new block to the chain
+                data.blocks.push(newBlock);
+
+                // Update the bin
+                await axios.put(`https://api.jsonbin.io/v3/b/${BIN_ID}`, data, { headers });
+
+                alert('Block mined successfully!');
+                loadPendingTransactions();
+                loadBlockchain();
+            } catch (error) {
+                console.error('Error mining block:', error);
+                alert('Failed to mine block.');
+            }
+        });
+
+        async function loadPendingTransactions() {
+            try {
+                const response = await axios.get(`https://api.jsonbin.io/v3/b/${BIN_ID}`, { headers });
+                const data = response.data.record;
+
+                const transactions = data.transactions.map(
+                    (t) => `${t.type.toUpperCase()}: ${t.title} (${t.description})`
+                ).join('\n');
+
+                document.getElementById('pending-transactions').innerText = transactions || 'No pending transactions.';
+            } catch (error) {
+                console.error('Error loading transactions:', error);
+            }
+        }
+
+        async function loadBlockchain() {
+            try {
+                const response = await axios.get(`https://api.jsonbin.io/v3/b/${BIN_ID}`, { headers });
+                const data = response.data.record;
+
+                const blockchain = data.blocks.map(
+                    (b) => `Block #${b.index}\nMined By: ${b.miner}\nTransactions:\n${b.transactions.map(
+                        (t) => `  - ${t.type.toUpperCase()}: ${t.title}`
+                    ).join('\n')}`
+                ).join('\n\n');
+
+                document.getElementById('blockchain').innerText = blockchain || 'Blockchain is empty.';
+            } catch (error) {
+                console.error('Error loading blockchain:', error);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadPendingTransactions();
+            loadBlockchain();
         });
     </script>
 </body>
