@@ -103,17 +103,14 @@
             const passphrase = document.getElementById('passphrase').value;
 
             try {
-                // Fetch existing bin data
                 const response = await axios.get(`https://api.jsonbin.io/v3/b/${BIN_ID}`, { headers });
                 const data = response.data.record;
 
-                // Check if username exists
                 const existingUser = data.profiles.find(
                     (profile) => profile.username === username
                 );
 
                 if (existingUser) {
-                    // Login flow
                     if (existingUser.passphrase === passphrase) {
                         alert(`Welcome back, ${username}!`);
                         document.getElementById('welcome-title').innerText = `DreamLedger - Welcome, ${username}`;
@@ -123,7 +120,6 @@
                         alert('Incorrect passphrase!');
                     }
                 } else {
-                    // Profile creation flow
                     data.profiles.push({ username, passphrase });
 
                     await axios.put(`https://api.jsonbin.io/v3/b/${BIN_ID}`, data, { headers });
@@ -152,14 +148,11 @@
             };
 
             try {
-                // Fetch existing bin data
                 const response = await axios.get(`https://api.jsonbin.io/v3/b/${BIN_ID}`, { headers });
                 const data = response.data.record;
 
-                // Add the new transaction
                 data.transactions.push(transaction);
 
-                // Update the bin
                 await axios.put(`https://api.jsonbin.io/v3/b/${BIN_ID}`, data, { headers });
 
                 alert('Your vision has been added successfully!');
@@ -197,9 +190,9 @@
 
                 const progress = document.getElementById('mining-progress');
 
-                const miningInterval = setInterval(() => {
+                const miningInterval = setInterval(async () => {
                     nonce++;
-                    hash = sha256(previousBlockHash + transactions + nonce);
+                    hash = await sha256(previousBlockHash + transactions + nonce);
 
                     if (hash.startsWith('0000')) {
                         clearInterval(miningInterval);
@@ -251,6 +244,29 @@ Nonce: ${nonce}`);
             const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
             const hashArray = Array.from(new Uint8Array(hashBuffer));
             return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+
+        async function mineBlock(data, nonce, hash, minerName) {
+            const newBlock = {
+                index: data.blocks.length + 1,
+                timestamp: new Date().toISOString(),
+                transactions: [...data.transactions],
+                nonce,
+                hash,
+                miner: minerName,
+            };
+
+            data.transactions = [];
+            data.blocks.push(newBlock);
+
+            try {
+                await axios.put(`https://api.jsonbin.io/v3/b/${BIN_ID}`, data, { headers });
+                loadPendingTransactions();
+                loadBlockchain();
+            } catch (error) {
+                console.error('Error updating blockchain:', error);
+                alert('Failed to update blockchain.');
+            }
         }
     </script>
 </body>
