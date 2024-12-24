@@ -3,14 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DreamLedger - Welcome</title>
+    <title>DreamLedger - Explore Your Dreams</title>
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.1.3/css/bootstrap.min.css">
     <style>
         body {
             background-color: #f8f9fa;
             padding: 20px;
+            animation: background-color-change 10s infinite;
         }
+
+        @keyframes background-color-change {
+            0% { background-color: #f8f9fa; }
+            25% { background-color: #e8f0fe; }
+            50% { background-color: #e1f5fe; }
+            75% { background-color: #e8fce8; }
+            100% { background-color: #f8f9fa; }
+        }
+
         .container {
             max-width: 800px;
             margin: 0 auto;
@@ -29,23 +39,6 @@
             font-size: 0.9rem;
             color: #555;
         }
-        .gear-animation {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-        .gear {
-            width: 30px;
-            height: 30px;
-            margin: 5px;
-            background: #ccc;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
         .ledger-block {
             border: 1px solid #ccc;
             padding: 10px;
@@ -58,22 +51,25 @@
             margin-top: 20px;
             display: none;
         }
+        .pending-transactions {
+            margin-bottom: 15px;
+            background: #f9f9f9;
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1 class="text-center" id="welcome-title">DreamLedger</h1>
+        <h1 class="text-center" id="welcome-title">DreamLedger - Explore Your Dreams</h1>
         <div id="auth-section" class="card">
             <div class="card-body">
                 <h5 class="card-title">Create Profile / Login</h5>
                 <form id="auth-form">
                     <div class="mb-3">
-                        <label for="username" class="form-label">Username</label>
+                        <label for="username" class="form-label">Your Name</label>
                         <input type="text" class="form-control" id="username" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="passphrase" class="form-label">Passphrase</label>
-                        <input type="password" class="form-control" id="passphrase" required>
                     </div>
                     <button type="submit" class="btn btn-primary">Let’s Go</button>
                 </form>
@@ -83,23 +79,23 @@
         <div id="dashboard-section" class="d-none">
             <div class="card">
                 <div class="card-body">
-                    <h5 class="card-title">Drop Your Dream</h5>
+                    <h5 class="card-title">What's on Your Mind?</h5>
                     <form id="entry-form">
                         <div class="mb-3">
-                            <label for="entry-title" class="form-label">Title</label>
+                            <label for="entry-title" class="form-label">What's Your Vision?</label>
                             <input type="text" class="form-control" id="entry-title" required>
                         </div>
                         <div class="mb-3">
-                            <label for="entry-description" class="form-label">Description</label>
+                            <label for="entry-description" class="form-label">Tell Us More About It</label>
                             <textarea class="form-control" id="entry-description" rows="3" required></textarea>
                         </div>
                         <div class="mb-3">
-                            <label for="entry-type" class="form-label">Category</label>
+                            <label for="entry-type" class="form-label">Select Your Vibe</label>
                             <select class="form-select" id="entry-type" required>
-                                <option value="dream">Dream</option>
+                                <option value="dream">Big Dream</option>
                                 <option value="fantasy">Fantasy</option>
                                 <option value="regret">Regret</option>
-                                <option value="goal">Goal</option>
+                                <option value="goal">Life Goal</option>
                             </select>
                         </div>
                         <button type="submit" class="btn btn-success">Submit My Vision</button>
@@ -109,29 +105,14 @@
 
             <div class="card">
                 <div class="card-body">
-                    <h5 class="card-title">Pending Transactions</h5>
+                    <h5 class="card-title">Dreams Waiting to Be Immortalized</h5>
                     <div id="pending-transactions"></div>
                 </div>
             </div>
             <div class="card">
                 <div class="card-body">
-                    <h5 class="card-title">Mining Status</h5>
-                    <p>There are people’s dreams waiting to be added to the chain. Click the button below to mine and secure them!</p>
-                    <div id="nonce-display">Nonce: 0</div>
-                    <div id="hash-display">Hash: N/A</div>
-                    <div class="gear-animation">
-                        <div class="gear"></div>
-                        <div class="gear"></div>
-                        <div class="gear"></div>
-                    </div>
-                    <button id="mine-button" class="btn btn-warning">Start Mining</button>
-                </div>
-            </div>
-
-            <div class="card">
-                <div class="card-body">
                     <h5 class="card-title">Blockchain Ledger</h5>
-                    <button id="view-blockchain-button" class="btn btn-info">Show the Ledger</button>
+                    <button id="view-blockchain-button" class="btn btn-info">Explore Recorded Dreams</button>
                     <div class="spinner" id="spinner">Loading...</div>
                     <div id="blockchain-section"></div>
                 </div>
@@ -148,13 +129,14 @@
             'X-Master-Key': SECRET_KEY,
         };
 
+        let currentUsername = '';
+
         document.getElementById('auth-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             const username = document.getElementById('username').value;
-            const passphrase = document.getElementById('passphrase').value;
 
-            if (!username || !passphrase) {
-                alert('Please fill in both Username and Passphrase!');
+            if (!username) {
+                alert('Please enter your name!');
                 return;
             }
 
@@ -162,28 +144,21 @@
                 const response = await axios.get(`https://api.jsonbin.io/v3/b/${BIN_ID}`, { headers });
                 const data = response.data.record;
 
-                const existingUser = data.profiles.find(
-                    (profile) => profile.username === username
-                );
+                const existingUser = data.profiles.find((profile) => profile.username === username);
 
-                if (existingUser) {
-                    if (existingUser.passphrase === passphrase) {
-                        alert(`Welcome back, ${username}!`);
-                        document.getElementById('welcome-title').innerText = `DreamLedger - Welcome, ${username}`;
-                        document.getElementById('auth-section').classList.add('d-none');
-                        document.getElementById('dashboard-section').classList.remove('d-none');
-                    } else {
-                        alert('Incorrect passphrase!');
-                    }
-                } else {
-                    data.profiles.push({ username, passphrase });
+                if (!existingUser) {
+                    data.profiles.push({ username });
 
                     await axios.put(`https://api.jsonbin.io/v3/b/${BIN_ID}`, data, { headers });
                     alert(`Profile created successfully! Welcome, ${username}!`);
-                    document.getElementById('welcome-title').innerText = `DreamLedger - Welcome, ${username}`;
-                    document.getElementById('auth-section').classList.add('d-none');
-                    document.getElementById('dashboard-section').classList.remove('d-none');
+                } else {
+                    alert(`Welcome back, ${username}!`);
                 }
+
+                currentUsername = username;
+                document.getElementById('welcome-title').innerText = `DreamLedger - Welcome, ${username}`;
+                document.getElementById('auth-section').classList.add('d-none');
+                document.getElementById('dashboard-section').classList.remove('d-none');
             } catch (error) {
                 console.error('Error handling profile:', error);
                 alert('Failed to create or login to profile.');
@@ -206,6 +181,7 @@
                 description,
                 type,
                 timestamp: new Date().toISOString(),
+                sender: currentUsername,
             };
 
             try {
@@ -225,6 +201,26 @@
             }
         });
 
+        async function loadPendingTransactions() {
+            try {
+                const response = await axios.get(`https://api.jsonbin.io/v3/b/${BIN_ID}`, { headers });
+                const data = response.data.record;
+                const pendingTransactions = data.transactions.map(
+                    (t) => `<div>- ${t.type.toUpperCase()}: ${t.title} (${t.description})</div>`
+                ).join('');
+                document.getElementById('pending-transactions').innerHTML = pendingTransactions || '<p>No pending transactions.</p>';
+            } catch (error) {
+                console.error('Error loading pending transactions:', error);
+            }
+        }
+
+        async function sha256(message) {
+            const msgBuffer = new TextEncoder().encode(message);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+
         document.getElementById('mine-button').addEventListener('click', async () => {
             try {
                 const response = await axios.get(`https://api.jsonbin.io/v3/b/${BIN_ID}`, { headers });
@@ -239,28 +235,34 @@
                     ? data.blocks[data.blocks.length - 1].hash
                     : '0000';
                 const transactions = JSON.stringify(data.transactions);
-                const minerName = data.profiles.find(profile => profile.username)?.username || 'Anonymous';
+                const minerName = currentUsername;
 
                 let nonce = 0;
                 let hash = '';
-                const nonceDisplay = document.getElementById('nonce-display');
-                const hashDisplay = document.getElementById('hash-display');
 
-                const miningInterval = setInterval(async () => {
+                while (!hash.startsWith('00')) {
                     nonce++;
                     hash = await sha256(previousBlockHash + transactions + nonce);
+                    document.getElementById('nonce-display').innerText = `Nonce: ${nonce}`;
+                    document.getElementById('hash-display').innerText = `Hash: ${hash}`;
+                }
 
-                    nonceDisplay.innerText = `Nonce: ${nonce}`;
-                    hashDisplay.innerText = `Hash: ${hash}`;
+                const newBlock = {
+                    index: data.blocks.length + 1,
+                    timestamp: new Date().toISOString(),
+                    transactions: [...data.transactions, ...data.blocks.flatMap(b => b.transactions)],
+                    nonce,
+                    hash,
+                    miner: minerName,
+                };
 
-                    if (hash.startsWith('0000')) {
-                        clearInterval(miningInterval);
-                        await mineBlock(data, nonce, hash, minerName);
-                        alert(`Block mined successfully by ${minerName}!
-Nonce: ${nonce}`);
-                    }
-                }, 10);
+                data.transactions = [];
+                data.blocks.push(newBlock);
 
+                await axios.put(`https://api.jsonbin.io/v3/b/${BIN_ID}`, data, { headers });
+                alert(`Block mined successfully by ${minerName}!`);
+                loadPendingTransactions();
+                loadBlockchain();
             } catch (error) {
                 console.error('Error during mining:', error);
                 alert('Failed to mine block.');
@@ -283,8 +285,8 @@ Nonce: ${nonce}`);
                     <div class="ledger-block">
                         <strong>Block #${b.index}</strong><br>
                         <strong>Mined By:</strong> ${b.miner}<br>
-                        <strong>Timestamp:</strong> ${b.timestamp}<br>
-                        <strong>Transactions:</strong>
+                        <strong>Timestamp:</strong> ${new Date(b.timestamp).toLocaleString()}<br>
+                        <strong>Hidden Visions:</strong>
                         ${b.transactions.map(
                             (t) => `<br>- ${t.type.toUpperCase()}: ${t.title} (${t.description}) | User: ${t.sender || "Unknown"}`
                         ).join('')}
@@ -300,71 +302,6 @@ Nonce: ${nonce}`);
                 alert('Failed to load blockchain.');
             }
         });
-
-        async function sha256(message) {
-            const msgBuffer = new TextEncoder().encode(message);
-            const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
-            const hashArray = Array.from(new Uint8Array(hashBuffer));
-            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-        }
-
-        async function mineBlock(data, nonce, hash, minerName) {
-            const newBlock = {
-                index: data.blocks.length + 1,
-                timestamp: new Date().toISOString(),
-                transactions: [...data.transactions],
-                nonce,
-                hash,
-                miner: minerName,
-            };
-
-            data.transactions = [];
-            data.blocks.push(newBlock);
-
-            try {
-                await axios.put(`https://api.jsonbin.io/v3/b/${BIN_ID}`, data, { headers });
-                loadPendingTransactions();
-                loadBlockchain();
-            } catch (error) {
-                console.error('Error updating blockchain:', error);
-                alert('Failed to update blockchain.');
-            }
-        }
-
-        async function loadPendingTransactions() {
-            try {
-                const response = await axios.get(`https://api.jsonbin.io/v3/b/${BIN_ID}`, { headers });
-                const data = response.data.record;
-                const pendingTransactions = data.transactions.map(
-                    (t) => `<div>- ${t.type.toUpperCase()}: ${t.title} (${t.description})</div>`
-                ).join('');
-                document.getElementById('pending-transactions').innerHTML = pendingTransactions || '<p>No pending transactions.</p>';
-            } catch (error) {
-                console.error('Error loading pending transactions:', error);
-            }
-        }
-
-        async function loadBlockchain() {
-            try {
-                const response = await axios.get(`https://api.jsonbin.io/v3/b/${BIN_ID}`, { headers });
-                const data = response.data.record;
-                const blockchain = data.blocks.map(
-                    (b) => `
-                    <div class="ledger-block">
-                        <strong>Block #${b.index}</strong><br>
-                        <strong>Mined By:</strong> ${b.miner}<br>
-                        <strong>Timestamp:</strong> ${b.timestamp}<br>
-                        <strong>Transactions:</strong>
-                        ${b.transactions.map(
-                            (t) => `<br>- ${t.type.toUpperCase()}: ${t.title} (${t.description}) | User: ${t.sender || "Unknown"}`
-                        ).join('')}
-                    </div>`
-                ).join('');
-                document.getElementById('blockchain-section').innerHTML = blockchain || '<p>No blocks in the ledger.</p>';
-            } catch (error) {
-                console.error('Error loading blockchain:', error);
-            }
-        }
     </script>
 </body>
 </html>
