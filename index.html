@@ -53,6 +53,11 @@
             border-radius: 5px;
             background: #fff;
         }
+        .spinner {
+            text-align: center;
+            margin-top: 20px;
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -108,7 +113,6 @@
                     <div id="pending-transactions"></div>
                 </div>
             </div>
-
             <div class="card">
                 <div class="card-body">
                     <h5 class="card-title">Mining Status</h5>
@@ -128,6 +132,7 @@
                 <div class="card-body">
                     <h5 class="card-title">Blockchain Ledger</h5>
                     <button id="view-blockchain-button" class="btn btn-info">Show the Ledger</button>
+                    <div class="spinner" id="spinner">Loading...</div>
                     <div id="blockchain-section"></div>
                 </div>
             </div>
@@ -264,32 +269,35 @@ Nonce: ${nonce}`);
 
         document.getElementById('view-blockchain-button').addEventListener('click', async () => {
             const blockchainSection = document.getElementById('blockchain-section');
+            const spinner = document.getElementById('spinner');
 
-            if (blockchainSection.style.display === 'none') {
+            spinner.style.display = 'block';
+            blockchainSection.style.display = 'none';
+
+            try {
+                const response = await axios.get(`https://api.jsonbin.io/v3/b/${BIN_ID}`, { headers });
+                const data = response.data.record;
+
+                const blockchain = data.blocks.map(
+                    (b) => `
+                    <div class="ledger-block">
+                        <strong>Block #${b.index}</strong><br>
+                        <strong>Mined By:</strong> ${b.miner}<br>
+                        <strong>Timestamp:</strong> ${b.timestamp}<br>
+                        <strong>Transactions:</strong>
+                        ${b.transactions.map(
+                            (t) => `<br>- ${t.type.toUpperCase()}: ${t.title} (${t.description}) | User: ${t.sender || "Unknown"}`
+                        ).join('')}
+                    </div>`
+                ).join('');
+
+                spinner.style.display = 'none';
                 blockchainSection.style.display = 'block';
-                try {
-                    const response = await axios.get(`https://api.jsonbin.io/v3/b/${BIN_ID}`, { headers });
-                    const data = response.data.record;
-
-                    const blockchain = data.blocks.map(
-                        (b) => `
-                        <div class="ledger-block">
-                            <strong>Block #${b.index}</strong><br>
-                            <strong>Mined By:</strong> ${b.miner}<br>
-                            <strong>Transactions:</strong>
-                            ${b.transactions.map(
-                                (t) => `<br>- ${t.type.toUpperCase()}: ${t.title} (${t.description})`
-                            ).join('')}
-                        </div>`
-                    ).join('');
-
-                    blockchainSection.innerHTML = blockchain || '<p>No blocks in the ledger.</p>';
-                } catch (error) {
-                    console.error('Error loading blockchain:', error);
-                    alert('Failed to load blockchain.');
-                }
-            } else {
-                blockchainSection.style.display = 'none';
+                blockchainSection.innerHTML = blockchain || '<p>No blocks in the ledger.</p>';
+            } catch (error) {
+                spinner.style.display = 'none';
+                console.error('Error loading blockchain:', error);
+                alert('Failed to load blockchain.');
             }
         });
 
@@ -345,9 +353,10 @@ Nonce: ${nonce}`);
                     <div class="ledger-block">
                         <strong>Block #${b.index}</strong><br>
                         <strong>Mined By:</strong> ${b.miner}<br>
+                        <strong>Timestamp:</strong> ${b.timestamp}<br>
                         <strong>Transactions:</strong>
                         ${b.transactions.map(
-                            (t) => `<br>- ${t.type.toUpperCase()}: ${t.title} (${t.description})`
+                            (t) => `<br>- ${t.type.toUpperCase()}: ${t.title} (${t.description}) | User: ${t.sender || "Unknown"}`
                         ).join('')}
                     </div>`
                 ).join('');
