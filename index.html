@@ -10,6 +10,7 @@
         body {
             background-color: #f8f9fa;
             padding: 20px;
+            animation: colorTransition 5s infinite;
         }
         .container {
             max-width: 800px;
@@ -43,13 +44,14 @@
         }
         @keyframes colorTransition {
             0% { background-color: #f8f9fa; }
-            25% { background-color: #e0f7fa; }
-            50% { background-color: #ffe0b2; }
-            75% { background-color: #e1bee7; }
+            25% { background-color: #d7e8f7; }
+            50% { background-color: #e7f0d4; }
+            75% { background-color: #f9e1d4; }
             100% { background-color: #f8f9fa; }
         }
-        body {
-            animation: colorTransition 5s infinite;
+        .tooltip-text {
+            font-size: 0.85rem;
+            color: #666;
         }
     </style>
 </head>
@@ -58,13 +60,14 @@
         <h1 class="text-center" id="welcome-title">DreamLedger</h1>
         <div id="auth-section" class="card">
             <div class="card-body">
-                <h5 class="card-title">Login / Your Profile</h5>
+                <h5 class="card-title">Step Into the World of Blockchain</h5>
+                <p class="tooltip-text">*Learn how blockchain secures your dreams and goals forever.*</p>
                 <form id="auth-form">
                     <div class="mb-3">
                         <label for="username" class="form-label">Your Name</label>
-                        <input type="text" class="form-control" id="username" required>
+                        <input type="text" class="form-control" id="username" placeholder="Enter your name" required>
                     </div>
-                    <button type="submit" class="btn btn-primary">Let’s Go</button>
+                    <button type="submit" class="btn btn-primary">Enter the Blockchain</button>
                 </form>
             </div>
         </div>
@@ -72,15 +75,15 @@
         <div id="dashboard-section" class="d-none">
             <div class="card">
                 <div class="card-body">
-                    <h5 class="card-title">What’s on Your Mind?</h5>
+                    <h5 class="card-title">Record Your Vision</h5>
                     <form id="entry-form">
                         <div class="mb-3">
-                            <label for="entry-title" class="form-label">Give It a Name</label>
-                            <input type="text" class="form-control" id="entry-title" required>
+                            <label for="entry-title" class="form-label">What’s the Dream?</label>
+                            <input type="text" class="form-control" id="entry-title" placeholder="Give it a name" required>
                         </div>
                         <div class="mb-3">
                             <label for="entry-description" class="form-label">Describe It</label>
-                            <textarea class="form-control" id="entry-description" rows="3" required></textarea>
+                            <textarea class="form-control" id="entry-description" rows="3" placeholder="Tell us more about it" required></textarea>
                         </div>
                         <div class="mb-3">
                             <label for="entry-type" class="form-label">Choose a Vibe</label>
@@ -105,7 +108,7 @@
             <div class="card">
                 <div class="card-body">
                     <h5 class="card-title">Mining Status</h5>
-                    <p>Mine a block to secure and immortalize all dreams, fantasies, and goals in the chain!</p>
+                    <p class="tooltip-text">Mining secures your dreams by solving cryptographic puzzles, ensuring their permanence in the blockchain.</p>
                     <div id="nonce-display">Nonce: 0</div>
                     <div id="hash-display">Hash: N/A</div>
                     <button id="mine-button" class="btn btn-warning">Forge the Block</button>
@@ -114,8 +117,9 @@
 
             <div class="card">
                 <div class="card-body">
-                    <h5 class="card-title">Blockchain Ledger</h5>
-                    <button id="view-blockchain-button" class="btn btn-info">Explore Recorded Dreams</button>
+                    <h5 class="card-title">Dive Into the Dream Ledger</h5>
+                    <p class="tooltip-text">The ledger is an unbreakable chain of blocks storing all recorded dreams, fantasies, and goals securely.</p>
+                    <button id="view-blockchain-button" class="btn btn-info">Explore the Secrets</button>
                     <div class="spinner" id="spinner">Loading...</div>
                     <div id="blockchain-section"></div>
                 </div>
