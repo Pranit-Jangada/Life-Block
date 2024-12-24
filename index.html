@@ -53,6 +53,11 @@
             font-size: 0.85rem;
             color: #666;
         }
+        .highlight-box {
+            border: 2px dashed #ffa500;
+            padding: 10px;
+            background: #fffbe6;
+        }
     </style>
 </head>
 <body>
@@ -100,6 +105,17 @@
             </div>
 
             <div class="card">
+                <div class="card-body highlight-box">
+                    <h5 class="card-title">How Your Dreams Become Immortalized in the Blockchain</h5>
+                    <p>
+                        All the dreams, fantasies, goals, and regrets you record here first appear in this section as pending items. 
+                        Once you click "Forge the Block," these entries are secured into a new block. 
+                        Every block carries all past dreams along with the new ones, ensuring the ledger contains the full story of your recorded aspirations.
+                    </p>
+                </div>
+            </div>
+
+            <div class="card">
                 <div class="card-body">
                     <h5 class="card-title">Dreams Waiting to Be Immortalized</h5>
                     <div id="pending-transactions"></div>
@@ -108,7 +124,10 @@
             <div class="card">
                 <div class="card-body">
                     <h5 class="card-title">Mining Status</h5>
-                    <p class="tooltip-text">Mining secures your dreams by solving cryptographic puzzles, ensuring their permanence in the blockchain.</p>
+                    <p class="tooltip-text">
+                        Mining secures your dreams by solving cryptographic puzzles, ensuring their permanence in the blockchain. 
+                        Each new block contains all past dreams and goals, making the chain unbreakable.
+                    </p>
                     <div id="nonce-display">Nonce: 0</div>
                     <div id="hash-display">Hash: N/A</div>
                     <button id="mine-button" class="btn btn-warning">Forge the Block</button>
@@ -118,7 +137,10 @@
             <div class="card">
                 <div class="card-body">
                     <h5 class="card-title">Dive Into the Dream Ledger</h5>
-                    <p class="tooltip-text">The ledger is an unbreakable chain of blocks storing all recorded dreams, fantasies, and goals securely.</p>
+                    <p class="tooltip-text">
+                        The ledger is a complete timeline of all recorded dreams, fantasies, and goals.
+                        Each block contains every dream from the start, ensuring an eternal record of aspirations.
+                    </p>
                     <button id="view-blockchain-button" class="btn btn-info">Explore the Secrets</button>
                     <div class="spinner" id="spinner">Loading...</div>
                     <div id="blockchain-section"></div>
