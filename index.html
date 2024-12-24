@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DreamChain</title>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.1.3/css/bootstrap.min.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .card {
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="text-center">DreamChain</h1>
+        <div id="auth-section" class="card">
+            <div class="card-body">
+                <h5 class="card-title">Create Profile / Login</h5>
+                <form id="auth-form">
+                    <div class="mb-3">
+                        <label for="username" class="form-label">Username</label>
+                        <input type="text" class="form-control" id="username" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="passphrase" class="form-label">Passphrase</label>
+                        <input type="password" class="form-control" id="passphrase" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Submit</button>
+                </form>
+            </div>
+        </div>
+
+        <div id="dashboard-section" class="d-none">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Add Your Entry</h5>
+                    <form id="entry-form">
+                        <div class="mb-3">
+                            <label for="entry-title" class="form-label">Title</label>
+                            <input type="text" class="form-control" id="entry-title" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="entry-description" class="form-label">Description</label>
+                            <textarea class="form-control" id="entry-description" rows="3" required></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label for="entry-type" class="form-label">Type</label>
+                            <select class="form-select" id="entry-type" required>
+                                <option value="dream">Dream</option>
+                                <option value="fantasy">Fantasy</option>
+                                <option value="regret">Regret</option>
+                                <option value="goal">Goal</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-success">Add Entry</button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Pending Transactions</h5>
+                    <pre id="pending-transactions"></pre>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Mine a Block</h5>
+                    <button id="mine-button" class="btn btn-warning">Mine</button>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Blockchain</h5>
+                    <pre id="blockchain"></pre>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'https://api.jsonbin.io/v3'; // JSONBin API
+        const BIN_ID = '<YOUR_BIN_ID>'; // Replace with your JSONBin ID
+        const SECRET_KEY = '<YOUR_SECRET_KEY>'; // Replace with your JSONBin secret key
+
+        const headers = {
+            'Content-Type': 'application/json',
+            'X-Master-Key': SECRET_KEY,
+        };
+
+        document.getElementById('auth-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const username = document.getElementById('username').value;
+            const passphrase = document.getElementById('passphrase').value;
+
+            // Simple login logic
+            alert('Logged in as ' + username);
+            document.getElementById('auth-section').classList.add('d-none');
+            document.getElementById('dashboard-section').classList.remove('d-none');
+        });
+
+        document.getElementById('entry-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const title = document.getElementById('entry-title').value;
+            const description = document.getElementById('entry-description').value;
+            const type = document.getElementById('entry-type').value;
+
+            // Add entry logic
+            alert(`Entry Added: ${title} - ${type}`);
+            document.getElementById('entry-form').reset();
+        });
+
+        document.getElementById('mine-button').addEventListener('click', async () => {
+            alert('Mining a block...');
+        });
+    </script>
+</body>
+</html>
