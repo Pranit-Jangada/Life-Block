@@ -25,6 +25,34 @@
             font-weight: bold;
             color: green;
         }
+        #hash-display {
+            font-size: 0.9rem;
+            color: #555;
+        }
+        .gear-animation {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .gear {
+            width: 30px;
+            height: 30px;
+            margin: 5px;
+            background: #ccc;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .ledger-block {
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            background: #fff;
+        }
     </style>
 </head>
 <body>
@@ -76,18 +104,31 @@
 
             <div class="card">
                 <div class="card-body">
+                    <h5 class="card-title">Pending Transactions</h5>
+                    <div id="pending-transactions"></div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-body">
                     <h5 class="card-title">Mining Status</h5>
                     <p>There are people’s dreams waiting to be added to the chain. Click the button below to mine and secure them!</p>
                     <div id="nonce-display">Nonce: 0</div>
+                    <div id="hash-display">Hash: N/A</div>
+                    <div class="gear-animation">
+                        <div class="gear"></div>
+                        <div class="gear"></div>
+                        <div class="gear"></div>
+                    </div>
                     <button id="mine-button" class="btn btn-warning">Start Mining</button>
                 </div>
             </div>
 
             <div class="card">
                 <div class="card-body">
-                    <h5 class="card-title">Blockchain</h5>
+                    <h5 class="card-title">Blockchain Ledger</h5>
                     <button id="view-blockchain-button" class="btn btn-info">Show the Ledger</button>
-                    <pre id="blockchain-section"></pre>
+                    <div id="blockchain-section"></div>
                 </div>
             </div>
         </div>
@@ -106,6 +147,11 @@
             e.preventDefault();
             const username = document.getElementById('username').value;
             const passphrase = document.getElementById('passphrase').value;
+
+            if (!username || !passphrase) {
+                alert('Please fill in both Username and Passphrase!');
+                return;
+            }
 
             try {
                 const response = await axios.get(`https://api.jsonbin.io/v3/b/${BIN_ID}`, { headers });
@@ -145,6 +191,11 @@
             const description = document.getElementById('entry-description').value;
             const type = document.getElementById('entry-type').value;
 
+            if (!title || !description || !type) {
+                alert('Please fill in all fields to submit your vision.');
+                return;
+            }
+
             const transaction = {
                 title,
                 description,
@@ -162,6 +213,7 @@
 
                 alert('Your vision has been added successfully!');
                 document.getElementById('entry-form').reset();
+                loadPendingTransactions();
             } catch (error) {
                 console.error('Error adding entry:', error.response ? error.response.data : error);
                 alert('Failed to add your vision.');
@@ -187,12 +239,14 @@
                 let nonce = 0;
                 let hash = '';
                 const nonceDisplay = document.getElementById('nonce-display');
+                const hashDisplay = document.getElementById('hash-display');
 
                 const miningInterval = setInterval(async () => {
                     nonce++;
                     hash = await sha256(previousBlockHash + transactions + nonce);
 
                     nonceDisplay.innerText = `Nonce: ${nonce}`;
+                    hashDisplay.innerText = `Hash: ${hash}`;
 
                     if (hash.startsWith('0000')) {
                         clearInterval(miningInterval);
@@ -218,12 +272,18 @@ Nonce: ${nonce}`);
                     const data = response.data.record;
 
                     const blockchain = data.blocks.map(
-                        (b) => `Block #${b.index}\nMined By: ${b.miner}\nTransactions:\n${b.transactions.map(
-                            (t) => `  - ${t.type.toUpperCase()}: ${t.title}`
-                        ).join('\n')}`
-                    ).join('\n\n');
+                        (b) => `
+                        <div class="ledger-block">
+                            <strong>Block #${b.index}</strong><br>
+                            <strong>Mined By:</strong> ${b.miner}<br>
+                            <strong>Transactions:</strong>
+                            ${b.transactions.map(
+                                (t) => `<br>- ${t.type.toUpperCase()}: ${t.title} (${t.description})`
+                            ).join('')}
+                        </div>`
+                    ).join('');
 
-                    blockchainSection.innerText = blockchain || 'Blockchain is empty.';
+                    blockchainSection.innerHTML = blockchain || '<p>No blocks in the ledger.</p>';
                 } catch (error) {
                     console.error('Error loading blockchain:', error);
                     alert('Failed to load blockchain.');
@@ -260,6 +320,40 @@ Nonce: ${nonce}`);
             } catch (error) {
                 console.error('Error updating blockchain:', error);
                 alert('Failed to update blockchain.');
+            }
+        }
+
+        async function loadPendingTransactions() {
+            try {
+                const response = await axios.get(`https://api.jsonbin.io/v3/b/${BIN_ID}`, { headers });
+                const data = response.data.record;
+                const pendingTransactions = data.transactions.map(
+                    (t) => `<div>- ${t.type.toUpperCase()}: ${t.title} (${t.description})</div>`
+                ).join('');
+                document.getElementById('pending-transactions').innerHTML = pendingTransactions || '<p>No pending transactions.</p>';
+            } catch (error) {
+                console.error('Error loading pending transactions:', error);
+            }
+        }
+
+        async function loadBlockchain() {
+            try {
+                const response = await axios.get(`https://api.jsonbin.io/v3/b/${BIN_ID}`, { headers });
+                const data = response.data.record;
+                const blockchain = data.blocks.map(
+                    (b) => `
+                    <div class="ledger-block">
+                        <strong>Block #${b.index}</strong><br>
+                        <strong>Mined By:</strong> ${b.miner}<br>
+                        <strong>Transactions:</strong>
+                        ${b.transactions.map(
+                            (t) => `<br>- ${t.type.toUpperCase()}: ${t.title} (${t.description})`
+                        ).join('')}
+                    </div>`
+                ).join('');
+                document.getElementById('blockchain-section').innerHTML = blockchain || '<p>No blocks in the ledger.</p>';
+            } catch (error) {
+                console.error('Error loading blockchain:', error);
             }
         }
     </script>
