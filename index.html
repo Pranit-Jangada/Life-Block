@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DreamChain</title>
+    <title>DreamLedger - Welcome</title>
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.1.3/css/bootstrap.min.css">
     <style>
@@ -18,11 +18,14 @@
         .card {
             margin-bottom: 20px;
         }
+        #blockchain-section {
+            display: none;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1 class="text-center">DreamChain</h1>
+        <h1 class="text-center" id="welcome-title">DreamLedger</h1>
         <div id="auth-section" class="card">
             <div class="card-body">
                 <h5 class="card-title">Create Profile / Login</h5>
@@ -35,7 +38,7 @@
                         <label for="passphrase" class="form-label">Passphrase</label>
                         <input type="password" class="form-control" id="passphrase" required>
                     </div>
-                    <button type="submit" class="btn btn-primary">Submit</button>
+                    <button type="submit" class="btn btn-primary">Let’s Go</button>
                 </form>
             </div>
         </div>
@@ -43,7 +46,7 @@
         <div id="dashboard-section" class="d-none">
             <div class="card">
                 <div class="card-body">
-                    <h5 class="card-title">Add Your Entry</h5>
+                    <h5 class="card-title">Drop Your Dream</h5>
                     <form id="entry-form">
                         <div class="mb-3">
                             <label for="entry-title" class="form-label">Title</label>
@@ -54,7 +57,7 @@
                             <textarea class="form-control" id="entry-description" rows="3" required></textarea>
                         </div>
                         <div class="mb-3">
-                            <label for="entry-type" class="form-label">Type</label>
+                            <label for="entry-type" class="form-label">Category</label>
                             <select class="form-select" id="entry-type" required>
                                 <option value="dream">Dream</option>
                                 <option value="fantasy">Fantasy</option>
@@ -62,29 +65,24 @@
                                 <option value="goal">Goal</option>
                             </select>
                         </div>
-                        <button type="submit" class="btn btn-success">Add Entry</button>
+                        <button type="submit" class="btn btn-success">Submit My Vision</button>
                     </form>
                 </div>
             </div>
 
             <div class="card">
                 <div class="card-body">
-                    <h5 class="card-title">Pending Transactions</h5>
-                    <pre id="pending-transactions"></pre>
-                </div>
-            </div>
-
-            <div class="card">
-                <div class="card-body">
-                    <h5 class="card-title">Mine a Block</h5>
-                    <button id="mine-button" class="btn btn-warning">Mine</button>
+                    <h5 class="card-title">Mining Status</h5>
+                    <p>There are people’s dreams waiting to be added to the chain. Click the button below to mine and secure them!</p>
+                    <button id="mine-button" class="btn btn-warning">Start Mining</button>
                 </div>
             </div>
 
             <div class="card">
                 <div class="card-body">
                     <h5 class="card-title">Blockchain</h5>
-                    <pre id="blockchain"></pre>
+                    <button id="view-blockchain-button" class="btn btn-info">Show the Ledger</button>
+                    <pre id="blockchain-section"></pre>
                 </div>
             </div>
         </div>
@@ -92,7 +90,7 @@
 
     <script>
         const BIN_ID = '676a8804e41b4d34e46a6f08';
-        const SECRET_KEY = '$2a$10$ud5Qf2AyBK9SAgeJET/H1eMsMJhPGanAdhCg5xZT84BHrSw/KTfXW';
+        const SECRET_KEY = '$2a$10$3fhO6AC0jPJc8bWvZtKT5ecbjQzBeQ3pvPqUtTvTIvpBAY9SISLmi';
 
         const headers = {
             'Content-Type': 'application/json',
@@ -117,7 +115,8 @@
                 if (existingUser) {
                     // Login flow
                     if (existingUser.passphrase === passphrase) {
-                        alert('Login successful!');
+                        alert(`Welcome back, ${username}!`);
+                        document.getElementById('welcome-title').innerText = `DreamLedger - Welcome, ${username}`;
                         document.getElementById('auth-section').classList.add('d-none');
                         document.getElementById('dashboard-section').classList.remove('d-none');
                     } else {
@@ -128,7 +127,8 @@
                     data.profiles.push({ username, passphrase });
 
                     await axios.put(`https://api.jsonbin.io/v3/b/${BIN_ID}`, data, { headers });
-                    alert('Profile created and logged in successfully!');
+                    alert(`Profile created successfully! Welcome, ${username}!`);
+                    document.getElementById('welcome-title').innerText = `DreamLedger - Welcome, ${username}`;
                     document.getElementById('auth-section').classList.add('d-none');
                     document.getElementById('dashboard-section').classList.remove('d-none');
                 }
@@ -162,12 +162,11 @@
                 // Update the bin
                 await axios.put(`https://api.jsonbin.io/v3/b/${BIN_ID}`, data, { headers });
 
-                alert('Entry added successfully!');
+                alert('Your vision has been added successfully!');
                 document.getElementById('entry-form').reset();
-                loadPendingTransactions();
             } catch (error) {
                 console.error('Error adding entry:', error.response ? error.response.data : error);
-                alert('Failed to add entry.');
+                alert('Failed to add your vision.');
             }
         });
 
@@ -181,68 +180,78 @@
                     return;
                 }
 
-                // Create a new block
-                const newBlock = {
-                    index: data.blocks.length + 1,
-                    timestamp: new Date().toISOString(),
-                    transactions: [...data.transactions],
-                    miner: 'Anonymous', // Replace with username if available
-                };
+                const previousBlockHash = data.blocks.length
+                    ? data.blocks[data.blocks.length - 1].hash
+                    : '0000';
+                const transactions = JSON.stringify(data.transactions);
+                const minerName = data.profiles.find(profile => profile.username)?.username || 'Anonymous';
 
-                // Clear pending transactions
-                data.transactions = [];
+                let nonce = 0;
+                let hash = '';
+                let progressValue = 0;
 
-                // Add the new block to the chain
-                data.blocks.push(newBlock);
+                const progressBar = document.createElement('div');
+                progressBar.className = 'progress';
+                progressBar.innerHTML = '<div class="progress-bar" role="progressbar" style="width: 0%;" id="mining-progress"></div>';
+                document.body.appendChild(progressBar);
 
-                // Update the bin
-                await axios.put(`https://api.jsonbin.io/v3/b/${BIN_ID}`, data, { headers });
+                const progress = document.getElementById('mining-progress');
 
-                alert('Block mined successfully!');
-                loadPendingTransactions();
-                loadBlockchain();
+                const miningInterval = setInterval(() => {
+                    nonce++;
+                    hash = sha256(previousBlockHash + transactions + nonce);
+
+                    if (hash.startsWith('0000')) {
+                        clearInterval(miningInterval);
+                        mineBlock(data, nonce, hash, minerName);
+                        progress.style.width = '100%';
+                        progress.innerText = '100% - Mining Complete!';
+                        alert(`Block mined successfully by ${minerName}!
+Nonce: ${nonce}`);
+                    } else {
+                        progressValue += 1;
+                        progress.style.width = `${progressValue % 100}%`;
+                        progress.innerText = `${progressValue % 100}%`;
+                    }
+                }, 100);
+
             } catch (error) {
-                console.error('Error mining block:', error);
+                console.error('Error during mining:', error);
                 alert('Failed to mine block.');
             }
         });
 
-        async function loadPendingTransactions() {
-            try {
-                const response = await axios.get(`https://api.jsonbin.io/v3/b/${BIN_ID}`, { headers });
-                const data = response.data.record;
+        document.getElementById('view-blockchain-button').addEventListener('click', async () => {
+            const blockchainSection = document.getElementById('blockchain-section');
 
-                const transactions = data.transactions.map(
-                    (t) => `${t.type.toUpperCase()}: ${t.title} (${t.description})`
-                ).join('\n');
+            if (blockchainSection.style.display === 'none') {
+                blockchainSection.style.display = 'block';
+                try {
+                    const response = await axios.get(`https://api.jsonbin.io/v3/b/${BIN_ID}`, { headers });
+                    const data = response.data.record;
 
-                document.getElementById('pending-transactions').innerText = transactions || 'No pending transactions.';
-            } catch (error) {
-                console.error('Error loading transactions:', error);
+                    const blockchain = data.blocks.map(
+                        (b) => `Block #${b.index}\nMined By: ${b.miner}\nTransactions:\n${b.transactions.map(
+                            (t) => `  - ${t.type.toUpperCase()}: ${t.title}`
+                        ).join('\n')}`
+                    ).join('\n\n');
+
+                    blockchainSection.innerText = blockchain || 'Blockchain is empty.';
+                } catch (error) {
+                    console.error('Error loading blockchain:', error);
+                    alert('Failed to load blockchain.');
+                }
+            } else {
+                blockchainSection.style.display = 'none';
             }
-        }
-
-        async function loadBlockchain() {
-            try {
-                const response = await axios.get(`https://api.jsonbin.io/v3/b/${BIN_ID}`, { headers });
-                const data = response.data.record;
-
-                const blockchain = data.blocks.map(
-                    (b) => `Block #${b.index}\nMined By: ${b.miner}\nTransactions:\n${b.transactions.map(
-                        (t) => `  - ${t.type.toUpperCase()}: ${t.title}`
-                    ).join('\n')}`
-                ).join('\n\n');
-
-                document.getElementById('blockchain').innerText = blockchain || 'Blockchain is empty.';
-            } catch (error) {
-                console.error('Error loading blockchain:', error);
-            }
-        }
-
-        document.addEventListener('DOMContentLoaded', () => {
-            loadPendingTransactions();
-            loadBlockchain();
         });
+
+        async function sha256(message) {
+            const msgBuffer = new TextEncoder().encode(message);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        }
     </script>
 </body>
 </html>
