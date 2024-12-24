@@ -104,10 +104,38 @@
             const username = document.getElementById('username').value;
             const passphrase = document.getElementById('passphrase').value;
 
-            // Simple login logic
-            alert('Logged in as ' + username);
-            document.getElementById('auth-section').classList.add('d-none');
-            document.getElementById('dashboard-section').classList.remove('d-none');
+            try {
+                // Fetch existing bin data
+                const response = await axios.get(`https://api.jsonbin.io/v3/b/${BIN_ID}`, { headers });
+                const data = response.data.record;
+
+                // Check if username exists
+                const existingUser = data.profiles.find(
+                    (profile) => profile.username === username
+                );
+
+                if (existingUser) {
+                    // Login flow
+                    if (existingUser.passphrase === passphrase) {
+                        alert('Login successful!');
+                        document.getElementById('auth-section').classList.add('d-none');
+                        document.getElementById('dashboard-section').classList.remove('d-none');
+                    } else {
+                        alert('Incorrect passphrase!');
+                    }
+                } else {
+                    // Profile creation flow
+                    data.profiles.push({ username, passphrase });
+
+                    await axios.put(`https://api.jsonbin.io/v3/b/${BIN_ID}`, data, { headers });
+                    alert('Profile created and logged in successfully!');
+                    document.getElementById('auth-section').classList.add('d-none');
+                    document.getElementById('dashboard-section').classList.remove('d-none');
+                }
+            } catch (error) {
+                console.error('Error handling profile:', error);
+                alert('Failed to create or login to profile.');
+            }
         });
 
         document.getElementById('entry-form').addEventListener('submit', async (e) => {
@@ -138,7 +166,7 @@
                 document.getElementById('entry-form').reset();
                 loadPendingTransactions();
             } catch (error) {
-                console.error('Error adding entry:', error);
+                console.error('Error adding entry:', error.response ? error.response.data : error);
                 alert('Failed to add entry.');
             }
         });
