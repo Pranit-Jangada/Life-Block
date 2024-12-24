@@ -3,24 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DreamLedger - Explore Your Dreams</title>
+    <title>DreamLedger - Welcome</title>
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.1.3/css/bootstrap.min.css">
     <style>
         body {
             background-color: #f8f9fa;
             padding: 20px;
-            animation: background-color-change 10s infinite;
         }
-
-        @keyframes background-color-change {
-            0% { background-color: #f8f9fa; }
-            25% { background-color: #e8f0fe; }
-            50% { background-color: #e1f5fe; }
-            75% { background-color: #e8fce8; }
-            100% { background-color: #f8f9fa; }
-        }
-
         .container {
             max-width: 800px;
             margin: 0 auto;
@@ -51,21 +41,24 @@
             margin-top: 20px;
             display: none;
         }
-        .pending-transactions {
-            margin-bottom: 15px;
-            background: #f9f9f9;
-            padding: 10px;
-            border-radius: 5px;
-            box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
+        @keyframes colorTransition {
+            0% { background-color: #f8f9fa; }
+            25% { background-color: #e0f7fa; }
+            50% { background-color: #ffe0b2; }
+            75% { background-color: #e1bee7; }
+            100% { background-color: #f8f9fa; }
+        }
+        body {
+            animation: colorTransition 5s infinite;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1 class="text-center" id="welcome-title">DreamLedger - Explore Your Dreams</h1>
+        <h1 class="text-center" id="welcome-title">DreamLedger</h1>
         <div id="auth-section" class="card">
             <div class="card-body">
-                <h5 class="card-title">Create Profile / Login</h5>
+                <h5 class="card-title">Login / Your Profile</h5>
                 <form id="auth-form">
                     <div class="mb-3">
                         <label for="username" class="form-label">Your Name</label>
@@ -79,26 +72,26 @@
         <div id="dashboard-section" class="d-none">
             <div class="card">
                 <div class="card-body">
-                    <h5 class="card-title">What's on Your Mind?</h5>
+                    <h5 class="card-title">What’s on Your Mind?</h5>
                     <form id="entry-form">
                         <div class="mb-3">
-                            <label for="entry-title" class="form-label">What's Your Vision?</label>
+                            <label for="entry-title" class="form-label">Give It a Name</label>
                             <input type="text" class="form-control" id="entry-title" required>
                         </div>
                         <div class="mb-3">
-                            <label for="entry-description" class="form-label">Tell Us More About It</label>
+                            <label for="entry-description" class="form-label">Describe It</label>
                             <textarea class="form-control" id="entry-description" rows="3" required></textarea>
                         </div>
                         <div class="mb-3">
-                            <label for="entry-type" class="form-label">Select Your Vibe</label>
+                            <label for="entry-type" class="form-label">Choose a Vibe</label>
                             <select class="form-select" id="entry-type" required>
-                                <option value="dream">Big Dream</option>
+                                <option value="dream">Dream</option>
                                 <option value="fantasy">Fantasy</option>
                                 <option value="regret">Regret</option>
-                                <option value="goal">Life Goal</option>
+                                <option value="goal">Goal</option>
                             </select>
                         </div>
-                        <button type="submit" class="btn btn-success">Submit My Vision</button>
+                        <button type="submit" class="btn btn-success">Record It</button>
                     </form>
                 </div>
             </div>
@@ -109,6 +102,16 @@
                     <div id="pending-transactions"></div>
                 </div>
             </div>
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Mining Status</h5>
+                    <p>Mine a block to secure and immortalize all dreams, fantasies, and goals in the chain!</p>
+                    <div id="nonce-display">Nonce: 0</div>
+                    <div id="hash-display">Hash: N/A</div>
+                    <button id="mine-button" class="btn btn-warning">Forge the Block</button>
+                </div>
+            </div>
+
             <div class="card">
                 <div class="card-body">
                     <h5 class="card-title">Blockchain Ledger</h5>
@@ -206,19 +209,12 @@
                 const response = await axios.get(`https://api.jsonbin.io/v3/b/${BIN_ID}`, { headers });
                 const data = response.data.record;
                 const pendingTransactions = data.transactions.map(
-                    (t) => `<div>- ${t.type.toUpperCase()}: ${t.title} (${t.description})</div>`
+                    (t) => `<div>- ${t.type.toUpperCase()}: ${t.title} (${t.description}) | User: ${t.sender}</div>`
                 ).join('');
                 document.getElementById('pending-transactions').innerHTML = pendingTransactions || '<p>No pending transactions.</p>';
             } catch (error) {
                 console.error('Error loading pending transactions:', error);
             }
-        }
-
-        async function sha256(message) {
-            const msgBuffer = new TextEncoder().encode(message);
-            const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
-            const hashArray = Array.from(new Uint8Array(hashBuffer));
-            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
         }
 
         document.getElementById('mine-button').addEventListener('click', async () => {
@@ -302,6 +298,13 @@
                 alert('Failed to load blockchain.');
             }
         });
+
+        async function sha256(message) {
+            const msgBuffer = new TextEncoder().encode(message);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        }
     </script>
 </body>
 </html>
