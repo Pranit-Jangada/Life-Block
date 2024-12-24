@@ -21,6 +21,10 @@
         #blockchain-section {
             display: none;
         }
+        #nonce-display {
+            font-weight: bold;
+            color: green;
+        }
     </style>
 </head>
 <body>
@@ -74,6 +78,7 @@
                 <div class="card-body">
                     <h5 class="card-title">Mining Status</h5>
                     <p>There are people’s dreams waiting to be added to the chain. Click the button below to mine and secure them!</p>
+                    <div id="nonce-display">Nonce: 0</div>
                     <button id="mine-button" class="btn btn-warning">Start Mining</button>
                 </div>
             </div>
@@ -181,32 +186,21 @@
 
                 let nonce = 0;
                 let hash = '';
-                let progressValue = 0;
-
-                const progressBar = document.createElement('div');
-                progressBar.className = 'progress';
-                progressBar.innerHTML = '<div class="progress-bar" role="progressbar" style="width: 0%;" id="mining-progress"></div>';
-                document.body.appendChild(progressBar);
-
-                const progress = document.getElementById('mining-progress');
+                const nonceDisplay = document.getElementById('nonce-display');
 
                 const miningInterval = setInterval(async () => {
                     nonce++;
                     hash = await sha256(previousBlockHash + transactions + nonce);
 
+                    nonceDisplay.innerText = `Nonce: ${nonce}`;
+
                     if (hash.startsWith('0000')) {
                         clearInterval(miningInterval);
-                        mineBlock(data, nonce, hash, minerName);
-                        progress.style.width = '100%';
-                        progress.innerText = '100% - Mining Complete!';
+                        await mineBlock(data, nonce, hash, minerName);
                         alert(`Block mined successfully by ${minerName}!
 Nonce: ${nonce}`);
-                    } else {
-                        progressValue += 1;
-                        progress.style.width = `${progressValue % 100}%`;
-                        progress.innerText = `${progressValue % 100}%`;
                     }
-                }, 100);
+                }, 10);
 
             } catch (error) {
                 console.error('Error during mining:', error);
